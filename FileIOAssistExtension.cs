@@ -56,46 +56,36 @@ namespace FileIOAssist
             return true;
         }
 
+        public enum GetFileNameMode
+        {
+            Full,
+            OnlyName,
+        }
+
         /// <summary>
         /// 폴더내 파일 검색
         /// </summary>
         /// <param name="dirPath"> 대상 경로 </param>
         /// <param name="getFileNameMode"> "Full", "Name" </param>
         /// <returns></returns>
-        public static List<string> DirFileSerch(string dirPath, string getFileNameMode)
+        public static List<string> DirFileSerch(string dirPath, GetFileNameMode fileNameMode = GetFileNameMode.OnlyName)
         {
             List<string> fileList = new List<string>();
-            bool fileNameModeBool;
-
-            if (getFileNameMode == "Full")
-            {
-                fileNameModeBool = true;
-            }
-            else if (getFileNameMode == "Name")
-            {
-                fileNameModeBool = false;
-            }
-            else
-            {
-                fileNameModeBool = false;
-            }
 
             DirectoryInfo di = new DirectoryInfo(dirPath);
             if (di.Exists)
             {
-                if (fileNameModeBool)
+                switch (fileNameMode)
                 {
-                    foreach (FileInfo fileInfo in di.GetFiles())
-                    {
-                        fileList.Add(fileInfo.FullName);
-                    }
-                }
-                else
-                {
-                    foreach (FileInfo fileInfo in di.GetFiles())
-                    {
-                        fileList.Add(fileInfo.Name);
-                    }
+                    case GetFileNameMode.Full:
+                        foreach (FileInfo fileInfo in di.GetFiles())
+                            fileList.Add(fileInfo.FullName);
+                        break;
+
+                    case GetFileNameMode.OnlyName:
+                        foreach (FileInfo fileInfo in di.GetFiles())
+                            fileList.Add(fileInfo.Name);
+                        break;
                 }
             }
             return fileList;
