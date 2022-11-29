@@ -95,7 +95,6 @@ namespace FileIOAssist
 
         public void FileCopyBuffer (string source, string arrival)
         {
-
             FileInfo fileInfo = new FileInfo(source);
             //버퍼 크기 
             int iBufferSize = 5120;

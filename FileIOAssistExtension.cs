@@ -60,8 +60,9 @@ namespace FileIOAssist
         {
             Full,
             OnlyName,
+            GetFileNameWithoutExtension,
         }
-
+        
         /// <summary>
         /// 폴더내 파일 검색
         /// </summary>
@@ -85,6 +86,11 @@ namespace FileIOAssist
                     case GetFileNameMode.OnlyName:
                         foreach (FileInfo fileInfo in di.GetFiles())
                             fileList.Add(fileInfo.Name);
+                        break;
+
+                    case GetFileNameMode.GetFileNameWithoutExtension:
+                        foreach (FileInfo fileInfo in di.GetFiles())
+                            fileList.Add(Path.GetFileNameWithoutExtension(fileInfo.Name));
                         break;
                 }
             }
@@ -280,7 +286,7 @@ namespace FileIOAssist
                 {
                     foreach (string dir in dirs)
                     {
-                        filesList.AddRange(ImageFileFileSearch(dir, true));
+                        filesList.AddRange(ImageFileFileSearch(dir, getFileFullPath, true));
                     }
                 }
             }
