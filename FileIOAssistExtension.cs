@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.IO;
 
 namespace FileIOAssist
 {
@@ -62,18 +58,26 @@ namespace FileIOAssist
             OnlyName,
             GetFileNameWithoutExtension,
         }
-        
+
+        public enum SubfoldersSearch
+        {
+            None,
+            Full
+        }
+
         /// <summary>
         /// 폴더내 파일 검색
         /// </summary>
         /// <param name="dirPath"> 대상 경로 </param>
         /// <param name="getFileNameMode"> "Full", "Name" </param>
         /// <returns></returns>
-        public static List<string> DirFileSerch(string dirPath, GetFileNameMode fileNameMode = GetFileNameMode.OnlyName)
+        public static List<string> DirFileSerch(string dirPath, GetFileNameMode fileNameMode = GetFileNameMode.OnlyName, SubfoldersSearch subfoldersSearch = SubfoldersSearch.None)
         {
             List<string> fileList = new List<string>();
 
             DirectoryInfo di = new DirectoryInfo(dirPath);
+            string[] dirs = Directory.GetDirectories(dirPath);
+
             if (di.Exists)
             {
                 switch (fileNameMode)
@@ -93,6 +97,22 @@ namespace FileIOAssist
                             fileList.Add(Path.GetFileNameWithoutExtension(fileInfo.Name));
                         break;
                 }
+            }
+
+            switch (subfoldersSearch)
+            {
+                case SubfoldersSearch.None:
+                    return fileList;
+                case SubfoldersSearch.Full:
+                    //하위 폴더가지 확인 재귀 함수를 이용한 구현
+                    if (dirs.Length > 0)
+                    {
+                        foreach (string dir in dirs)
+                        {
+                            fileList.AddRange(DirFileSerch(dir, fileNameMode, subfoldersSearch));
+                        }
+                    }
+                    break;
             }
             return fileList;
         }

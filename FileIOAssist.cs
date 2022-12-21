@@ -1,10 +1,4 @@
-﻿using System.Collections.Concurrent;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Net.Sockets;
-using System.Reflection.Emit;
-using System.Runtime.CompilerServices;
-
-namespace FileIOAssist
+﻿namespace FileIOAssist
 {
     public class FileIOAssist : IDisposable
     {
@@ -42,7 +36,6 @@ namespace FileIOAssist
         }
 
         #endregion IDisposable
-
 
         private Task? taskFileCopy;
 
@@ -84,7 +77,7 @@ namespace FileIOAssist
             }
         }
 
-        public void FileCopy(string source, string arrival)
+        public void FileCopy(string source, string arrival, bool task)
         {
             if (this.ctsFileCopy == null || this.ctsFileCopy.IsCancellationRequested)
             {
@@ -93,10 +86,63 @@ namespace FileIOAssist
             }
         }
 
-        public void FileCopyBuffer (string source, string arrival)
+        public static bool FileCopy(string source, string arrival)
         {
             FileInfo fileInfo = new FileInfo(source);
-            //버퍼 크기 
+            //버퍼 크기
+            int iBufferSize = 5120;
+            long lSize = 0;
+            //총 파일 크기 얻기
+            long lTotalSize = fileInfo.Length;
+            //버퍼 크기만큼 바이트 배열 선언
+            byte[] bTmp = new byte[iBufferSize];
+
+            long TransByte = lTotalSize;
+            bool result = false;
+
+            FileStream fsRead = new FileStream(source, FileMode.Open);
+            FileStream fsWrite = new FileStream(arrival, FileMode.Create);
+
+            try
+            {
+                while (lSize < lTotalSize)
+                {
+                    int iLen = fsRead.Read(bTmp, 0, bTmp.Length);
+                    lSize += iLen;
+                    fsWrite.Write(bTmp, 0, iLen);
+
+                    TransByte = lSize;
+                }
+                TransByte = lTotalSize;
+
+                result = true;
+            }
+            catch
+            {
+                result = false;
+            }
+            finally
+            {
+                //파일 연결 해제...
+                fsWrite.Flush();
+                fsWrite.Close();
+                fsRead.Close();
+            }
+            if (!result)
+            {
+                try
+                {
+                    File.Delete(source);
+                }
+                catch { }
+            }
+            return result;
+        }
+
+        public void FileCopyBuffer(string source, string arrival)
+        {
+            FileInfo fileInfo = new FileInfo(source);
+            //버퍼 크기
             int iBufferSize = 5120;
             long lSize = 0;
             //총 파일 크기 얻기
@@ -123,7 +169,6 @@ namespace FileIOAssist
             }
             catch
             {
-
             }
             finally
             {
@@ -181,6 +226,43 @@ namespace FileIOAssist
             {
                 return false;
             }
+        }
+
+        /// <summary>
+        /// 폴더 복사
+        /// </summary>
+        /// <param name="sourceDir"></param>
+        /// <param name="arrivalDir"></param>
+        /// <returns>성공 여부</returns>
+        public static bool DirCopy(string sourceDir, string arrivalDir)
+        {
+            int faultFilesCount = 0;
+            List<string> sourceFiles = FileIOAssistExtension.DirFileSerch(sourceDir, FileIOAssistExtension.GetFileNameMode.Full);
+            foreach (string sourceFile in sourceFiles)
+            {
+                try
+                {
+                    string? sourceFileDirPath = Path.GetDirectoryName(sourceFile);
+                    if (!string.IsNullOrEmpty(sourceFileDirPath))
+                    {
+                        string arrivalFilePath = sourceFile.Replace(sourceDir, arrivalDir);
+                        string? arrivalFileDirPath = Path.GetDirectoryName(arrivalFilePath);
+                        if (string.IsNullOrEmpty(arrivalFileDirPath))
+                            continue;
+                        if (!Directory.Exists(arrivalFileDirPath))
+                            Directory.CreateDirectory(arrivalFileDirPath);
+                        FileCopy(sourceFile, arrivalFilePath);
+                    }
+                }
+                catch
+                {
+                    faultFilesCount++;
+                }
+            }
+            if (faultFilesCount >= sourceFiles.Count)
+                return false;
+            else
+                return true;
         }
     }
 }
