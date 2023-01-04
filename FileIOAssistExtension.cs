@@ -241,7 +241,7 @@ namespace FileIOAssist
         public static List<string> ImageFileFileSearch(string path, bool getFileFullPath)
         {
             List<string> filesList = new List<string>();
-            string[] files;
+            string[]? files;
             try
             {
                 string[] exts = imageExts; // 검색할 확장자 필터
@@ -273,7 +273,7 @@ namespace FileIOAssist
         /// <returns></returns>
         public static List<string> ImageFileFileSearch(string path, bool getFileFullPath, bool subfoldersSearch)
         {
-            List<string> filesList = new List<string>();
+            List<string> filesList = new();
             try
             {
                 string[] exts = imageExts; // 검색할 확장자 필터
