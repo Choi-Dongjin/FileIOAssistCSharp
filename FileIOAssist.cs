@@ -239,7 +239,7 @@ namespace FileIOAssist
         public static bool DirCopy(string sourceDir, string arrivalDir)
         {
             int faultFilesCount = 0;
-            List<string> sourceFiles = FileIOAssistExtension.DirFileSerch(sourceDir, FileIOAssistExtension.GetFileNameMode.Full);
+            List<string> sourceFiles = FileIOAssistExtension.DirFileSerch(sourceDir, FileIOAssistExtension.GetFileNameMode.Full, FileIOAssistExtension.SubfoldersSearch.Full);
             foreach (string sourceFile in sourceFiles)
             {
                 try

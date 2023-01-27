@@ -293,11 +293,9 @@ namespace FileIOAssist
                         // handle the case of the file already being
                         // opened by another process.
                         if (getFileFullPath)
-                            foreach (string fullFileName in files)
-                                filesList.Add(fullFileName);
+                            filesList.Add(FullFileName);
                         else
-                            foreach (string fullFileName in files)
-                                filesList.Add(Path.GetFileName(fullFileName));
+                            filesList.Add(Path.GetFileName(FullFileName));
                     }
                 }
 
