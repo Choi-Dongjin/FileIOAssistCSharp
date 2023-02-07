@@ -118,6 +118,61 @@ namespace FileIOAssist
         }
 
         /// <summary>
+        /// 폴더내 파일 검색
+        /// </summary>
+        /// <param name="dirPath"> 폴더 </param>
+        /// <param name="exts"> 확장자 필터 </param>
+        /// <param name="fileNameMode"> 리턴값, 이름만 or full Name </param>
+        /// <param name="subfoldersSearch"> 서브 폴더 확인 </param>
+        /// <returns></returns>
+        public static List<string> DirFileSerch(string dirPath, string[]? exts = null, GetFileNameMode fileNameMode = GetFileNameMode.OnlyName, SubfoldersSearch subfoldersSearch = SubfoldersSearch.None)
+        {
+            exts ??= new string[] { ".*" };
+            List<string> fileList = new();
+            DirectoryInfo di = new(dirPath);
+            string[] dirs = Directory.GetDirectories(dirPath);
+
+            if (di.Exists)
+            {
+                switch (fileNameMode)
+                {
+                    case GetFileNameMode.Full:
+                        foreach (FileInfo fileInfo in di.GetFiles("*.*", SearchOption.TopDirectoryOnly).Where(s => exts.Contains(Path.GetExtension(s.Name), StringComparer.OrdinalIgnoreCase)).ToArray())
+                            fileList.Add(fileInfo.FullName);
+                        break;
+
+                    case GetFileNameMode.OnlyName:
+                        foreach (FileInfo fileInfo in di.GetFiles("*.*", SearchOption.TopDirectoryOnly).Where(s => exts.Contains(Path.GetExtension(s.Name), StringComparer.OrdinalIgnoreCase)).ToArray())
+                            fileList.Add(fileInfo.Name);
+                        break;
+
+                    case GetFileNameMode.GetFileNameWithoutExtension:
+                        foreach (FileInfo fileInfo in di.GetFiles("*.*", SearchOption.TopDirectoryOnly).Where(s => exts.Contains(Path.GetExtension(s.Name), StringComparer.OrdinalIgnoreCase)).ToArray())
+                            fileList.Add(Path.GetFileNameWithoutExtension(fileInfo.Name));
+                        break;
+                }
+            }
+
+            switch (subfoldersSearch)
+            {
+                case SubfoldersSearch.None:
+                    return fileList;
+                case SubfoldersSearch.Full:
+                    //하위 폴더가지 확인 재귀 함수를 이용한 구현
+                    if (dirs.Length > 0)
+                    {
+                        foreach (string dir in dirs)
+                        {
+                            fileList.AddRange(DirFileSerch(dir, exts, fileNameMode, subfoldersSearch));
+                        }
+                    }
+                    break;
+            }
+            return fileList;
+        }
+
+
+        /// <summary>
         /// 폴더 사이즈 계산
         /// </summary>
         /// <param name="forderName"> 확인 경로 </param>
