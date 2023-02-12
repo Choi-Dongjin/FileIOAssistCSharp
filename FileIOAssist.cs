@@ -1,6 +1,4 @@
-﻿using System.Net.Sockets;
-
-namespace FileIOAssist
+﻿namespace FileIOAssist
 {
     public class FileIOAssist : IDisposable
     {

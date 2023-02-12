@@ -1,6 +1,4 @@
-﻿using System.IO;
-
-namespace FileIOAssist
+﻿namespace FileIOAssist
 {
     public class FileIOAssistExtension
     {
@@ -103,6 +101,7 @@ namespace FileIOAssist
             {
                 case SubfoldersSearch.None:
                     return fileList;
+
                 case SubfoldersSearch.Full:
                     //하위 폴더가지 확인 재귀 함수를 이용한 구현
                     if (dirs.Length > 0)
@@ -157,6 +156,7 @@ namespace FileIOAssist
             {
                 case SubfoldersSearch.None:
                     return fileList;
+
                 case SubfoldersSearch.Full:
                     //하위 폴더가지 확인 재귀 함수를 이용한 구현
                     if (dirs.Length > 0)
@@ -170,7 +170,6 @@ namespace FileIOAssist
             }
             return fileList;
         }
-
 
         /// <summary>
         /// 폴더 사이즈 계산
