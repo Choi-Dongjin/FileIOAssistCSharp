@@ -1,4 +1,6 @@
-﻿namespace FileIOAssist
+﻿using System.Diagnostics;
+
+namespace FileIOAssist
 {
     public class FileIOAssistExtension
     {
@@ -161,10 +163,22 @@
                     //하위 폴더가지 확인 재귀 함수를 이용한 구현
                     if (dirs.Length > 0)
                     {
-                        foreach (string dir in dirs)
+                        // 별렬 연산을 이용하여 검색 알고리즘 수정
+                        if (false)
                         {
-                            fileList.AddRange(DirFileSerch(dir, exts, fileNameMode, subfoldersSearch));
+                            List<Task<List<string>>> taskList = new();
+                            foreach (string dir in dirs)
+                                taskList.Add(Task.Run<List<string>>(() => DirFileSerch(dir, exts, fileNameMode, subfoldersSearch)));
+
+                            foreach (var task in taskList)
+                                fileList.AddRange(task.Result);
                         }
+                        else 
+                        {
+                            foreach (string dir in dirs)
+                                fileList.AddRange(DirFileSerch(dir, exts, fileNameMode, subfoldersSearch));
+                        }
+                        
                     }
                     break;
             }
@@ -339,7 +353,6 @@
                 {
                     // 이 곳에 해당 파일을 찾아서 처리할 코드를 삽입하면 된다.
                     // Console.WriteLine($"[{count++}] path - {FullFileName}");
-
                     // Delete a file by using File class static method...
                     if (System.IO.File.Exists(FullFileName))
                     {
