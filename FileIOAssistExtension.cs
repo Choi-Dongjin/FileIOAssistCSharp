@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using static FileIOAssist.FileIOAssistExtension;
 
 namespace FileIOAssist
 {
@@ -306,30 +307,9 @@ namespace FileIOAssist
         /// <param name="path"> 폴더 경로 </param>
         /// <param name="getFileFullPath"> 파일 전체 경로 출력 여부, true: 전체 경로 출력 - false: 파일 이름 출력</param>
         /// <returns></returns>
-        public static List<string> ImageFileFileSearch(string path, bool getFileFullPath)
+        public static List<string> ImageFileFileSearch(string path, GetFileNameMode fileNameMode = GetFileNameMode.OnlyName)
         {
-            List<string> filesList = new List<string>();
-            string[]? files;
-            try
-            {
-                string[] exts = imageExts; // 검색할 확장자 필터
-
-                string[] dirs = Directory.GetDirectories(path);
-                files = Directory.GetFiles(path, "*.*", SearchOption.TopDirectoryOnly).Where(s => exts.Contains(Path.GetExtension(s), StringComparer.OrdinalIgnoreCase)).ToArray();
-
-                if (getFileFullPath)
-                    foreach (string fullFileName in files)
-                        filesList.Add(fullFileName);
-                else
-                    foreach (string fullFileName in files)
-                        filesList.Add(Path.GetFileName(fullFileName));
-            }
-            catch (Exception ex)
-            {
-                files = null;
-                Console.WriteLine(ex);
-            }
-            return filesList;
+            return DirFileSerch(path, imageExts, fileNameMode, SubfoldersSearch.None);
         }
 
         /// <summary>
@@ -339,47 +319,9 @@ namespace FileIOAssist
         /// <param name="getFileFullPath"> 파일 전체 경로 출력 여부</param>
         /// <param name="subfoldersSearch"> 하위 폴더 검색 여부</param>
         /// <returns></returns>
-        public static List<string> ImageFileFileSearch(string path, bool getFileFullPath, bool subfoldersSearch)
+        public static List<string> ImageFileFileSearch(string path, GetFileNameMode fileNameMode = GetFileNameMode.OnlyName, SubfoldersSearch subfoldersSearch = SubfoldersSearch.None)
         {
-            List<string> filesList = new();
-            try
-            {
-                string[] exts = imageExts; // 검색할 확장자 필터
-
-                string[] dirs = Directory.GetDirectories(path);
-                string[] files = Directory.GetFiles(path, "*.*", SearchOption.TopDirectoryOnly).Where(s => exts.Contains(Path.GetExtension(s), StringComparer.OrdinalIgnoreCase)).ToArray();
-
-                foreach (string FullFileName in files)
-                {
-                    // 이 곳에 해당 파일을 찾아서 처리할 코드를 삽입하면 된다.
-                    // Console.WriteLine($"[{count++}] path - {FullFileName}");
-                    // Delete a file by using File class static method...
-                    if (System.IO.File.Exists(FullFileName))
-                    {
-                        // Use a try block to catch IOExceptions, to
-                        // handle the case of the file already being
-                        // opened by another process.
-                        if (getFileFullPath)
-                            filesList.Add(FullFileName);
-                        else
-                            filesList.Add(Path.GetFileName(FullFileName));
-                    }
-                }
-
-                //하위 폴더가지 확인 재귀 함수를 이용한 구현
-                if (dirs.Length > 0 && subfoldersSearch)
-                {
-                    foreach (string dir in dirs)
-                    {
-                        filesList.AddRange(ImageFileFileSearch(dir, getFileFullPath, true));
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex);
-            }
-            return filesList;
+            return DirFileSerch(path, imageExts, fileNameMode, subfoldersSearch);
         }
     }
 }
