@@ -1,7 +1,4 @@
-﻿using System.Diagnostics;
-using static FileIOAssist.FileIOAssistExtension;
-
-namespace FileIOAssist
+﻿namespace FileIOAssist
 {
     public class FileIOAssistExtension
     {
@@ -123,7 +120,7 @@ namespace FileIOAssist
         /// 폴더내 파일 검색
         /// </summary>
         /// <param name="dirPath"> 폴더 </param>
-        /// <param name="exts"> 확장자 필터 </param>
+        /// <param name="exts"> 확장자 필터 ex) .txt </param>
         /// <param name="fileNameMode"> 리턴값, 이름만 or full Name </param>
         /// <param name="subfoldersSearch"> 서브 폴더 확인 </param>
         /// <returns></returns>
@@ -187,7 +184,7 @@ namespace FileIOAssist
                             foreach (var task in taskList)
                                 fileList.AddRange(task.Result);
                         }
-                        else 
+                        else
                         {
                             foreach (string dir in dirs)
                             {
