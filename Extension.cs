@@ -1,6 +1,8 @@
-﻿namespace FileIOAssist
+﻿using System.Security.Cryptography;
+
+namespace FileIOAssist
 {
-    public class FileIOAssistExtension
+    public class Extension
     {
         /// <summary>
         /// 바이트로 되어있는 것을 KB, MB, GB 형식으로 변환 해주는 것
@@ -50,14 +52,14 @@
             return true;
         }
 
-        public enum GetFileNameMode
+        public enum GetNameType
         {
             Full,
             OnlyName,
             GetFileNameWithoutExtension,
         }
 
-        public enum SubfoldersSearch
+        public enum SubSearch
         {
             None,
             Full
@@ -69,7 +71,7 @@
         /// <param name="dirPath"> 대상 경로 </param>
         /// <param name="getFileNameMode"> "Full", "Name" </param>
         /// <returns></returns>
-        public static List<string> DirFileSerch(string dirPath, GetFileNameMode fileNameMode = GetFileNameMode.OnlyName, SubfoldersSearch subfoldersSearch = SubfoldersSearch.None, CancellationToken mainCT = default)
+        public static List<string> DirFileSerch(string dirPath, GetNameType fileNameMode = GetNameType.OnlyName, SubSearch subfoldersSearch = SubSearch.None, CancellationToken mainCT = default)
         {
             List<string> fileList = new List<string>();
 
@@ -80,17 +82,17 @@
             {
                 switch (fileNameMode)
                 {
-                    case GetFileNameMode.Full:
+                    case GetNameType.Full:
                         foreach (FileInfo fileInfo in di.GetFiles())
                             fileList.Add(fileInfo.FullName);
                         break;
 
-                    case GetFileNameMode.OnlyName:
+                    case GetNameType.OnlyName:
                         foreach (FileInfo fileInfo in di.GetFiles())
                             fileList.Add(fileInfo.Name);
                         break;
 
-                    case GetFileNameMode.GetFileNameWithoutExtension:
+                    case GetNameType.GetFileNameWithoutExtension:
                         foreach (FileInfo fileInfo in di.GetFiles())
                             fileList.Add(Path.GetFileNameWithoutExtension(fileInfo.Name));
                         break;
@@ -99,10 +101,10 @@
 
             switch (subfoldersSearch)
             {
-                case SubfoldersSearch.None:
+                case SubSearch.None:
                     return fileList;
 
-                case SubfoldersSearch.Full:
+                case SubSearch.Full:
                     //하위 폴더가지 확인 재귀 함수를 이용한 구현
                     if (dirs.Length > 0)
                     {
@@ -124,7 +126,7 @@
         /// <param name="fileNameMode"> 리턴값, 이름만 or full Name </param>
         /// <param name="subfoldersSearch"> 서브 폴더 확인 </param>
         /// <returns></returns>
-        public static List<string> DirFileSerch(string dirPath, string[]? exts = null, GetFileNameMode fileNameMode = GetFileNameMode.OnlyName, SubfoldersSearch subfoldersSearch = SubfoldersSearch.None, CancellationToken? CT = null)
+        public static List<string> DirFileSerch(string dirPath, string[]? exts = null, GetNameType fileNameMode = GetNameType.OnlyName, SubSearch subfoldersSearch = SubSearch.None, CancellationToken? CT = null)
         {
             exts ??= new string[] { ".*" };
             List<string> fileList = new();
@@ -139,21 +141,21 @@
             {
                 switch (fileNameMode)
                 {
-                    case GetFileNameMode.Full:
+                    case GetNameType.Full:
                         foreach (FileInfo fileInfo in di.GetFiles("*.*", SearchOption.TopDirectoryOnly).Where(s => exts.Contains(Path.GetExtension(s.Name), StringComparer.OrdinalIgnoreCase)).ToArray())
                         {
                             fileList.Add(fileInfo.FullName);
                         }
                         break;
 
-                    case GetFileNameMode.OnlyName:
+                    case GetNameType.OnlyName:
                         foreach (FileInfo fileInfo in di.GetFiles("*.*", SearchOption.TopDirectoryOnly).Where(s => exts.Contains(Path.GetExtension(s.Name), StringComparer.OrdinalIgnoreCase)).ToArray())
                         {
                             fileList.Add(fileInfo.Name);
                         }
                         break;
 
-                    case GetFileNameMode.GetFileNameWithoutExtension:
+                    case GetNameType.GetFileNameWithoutExtension:
                         foreach (FileInfo fileInfo in di.GetFiles("*.*", SearchOption.TopDirectoryOnly).Where(s => exts.Contains(Path.GetExtension(s.Name), StringComparer.OrdinalIgnoreCase)).ToArray())
                         {
                             fileList.Add(Path.GetFileNameWithoutExtension(fileInfo.Name));
@@ -168,10 +170,10 @@
 
             switch (subfoldersSearch)
             {
-                case SubfoldersSearch.None:
+                case SubSearch.None:
                     return fileList;
 
-                case SubfoldersSearch.Full:
+                case SubSearch.Full:
                     //하위 폴더가지 확인 재귀 함수를 이용한 구현
                     if (dirs.Length > 0)
                     {
@@ -198,6 +200,68 @@
                     break;
             }
             return fileList;
+        }
+
+        /// <summary>
+        /// 서브 딕셔너리 가져오기
+        /// </summary>
+        /// <param name="dirPath"></param>
+        /// <param name="subDirs"></param>
+        /// <returns></returns>
+        public static bool TrySubDirectories(string dirPath, out IReadOnlyCollection<string>? subDirs, GetNameType fileNameMode = GetNameType.Full)
+        {
+            if (!Directory.Exists(dirPath)) { subDirs = null; return false; }
+            try
+            {
+                DirectoryInfo directoryInfo = new DirectoryInfo(dirPath);
+                subDirs = GetSubDirectories(directoryInfo);
+            }
+            catch
+            {
+
+                subDirs = null;
+                return false;
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// 서브 딕셔너리 가져오기
+        /// </summary>
+        /// <param name="directory"></param>
+        /// <returns></returns>
+        static List<string> GetSubDirectories(DirectoryInfo directory, GetNameType fileNameMode = GetNameType.Full)
+        {
+            List<string> subDirectories = new List<string>();
+
+            try
+            {
+                // 디렉토리 안의 디렉토리 리스트 가져오기
+                DirectoryInfo[] subDirs = directory.GetDirectories();
+                switch (fileNameMode)
+                {
+                    case GetNameType.Full:
+                        // 리스트에 추가
+                        foreach (var subDir in subDirs)
+                        {
+                            subDirectories.Add(subDir.FullName);
+                        }
+                        break;
+                    case GetNameType.OnlyName:
+                        // 리스트에 추가
+                        foreach (var subDir in subDirs)
+                        {
+                            subDirectories.Add(subDir.Name);
+                        }
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"오류 발생: {ex.Message}");
+            }
+
+            return subDirectories;
         }
 
         /// <summary>
@@ -322,9 +386,77 @@
         /// <param name="getFileFullPath"> 파일 전체 경로 출력 여부</param>
         /// <param name="subfoldersSearch"> 하위 폴더 검색 여부</param>
         /// <returns></returns>
-        public static List<string> ImageFileSearch(string path, GetFileNameMode fileNameMode = GetFileNameMode.OnlyName, SubfoldersSearch subfoldersSearch = SubfoldersSearch.None, CancellationToken? CT = null)
+        public static List<string> ImageFileSearch(string path, GetNameType fileNameMode = GetNameType.OnlyName, SubSearch subfoldersSearch = SubSearch.None, CancellationToken? CT = null)
         {
             return DirFileSerch(path, imageExts, fileNameMode, subfoldersSearch, CT);
         }
+
+        /// <summary>
+        /// 해시(Hash) 값 검증, MD5
+        /// </summary>
+        /// <param name="filePath"> file path </param>
+        /// <param name="originalMD5"></param>
+        /// <returns></returns>
+        public static bool VerifyMD5(string filePath, string originalMD5)
+        {
+            string computedMD5 = GetMD5(filePath);
+            return originalMD5.ToLower().Equals(computedMD5);
+        }
+
+        /// <summary>
+        /// Get MD5
+        /// </summary>
+        /// <param name="filePath"></param>
+        /// <returns></returns>
+        public static string GetMD5(string filePath)
+        {
+            using var md5 = MD5.Create();
+            using var stream = File.OpenRead(filePath);
+            byte[] hash = md5.ComputeHash(stream);
+            return BitConverter.ToString(hash).Replace("-", "").ToLower();
+        }
+
+        /// <summary>
+        /// 해시(Hash) 값 검증, SHA-256 
+        /// </summary>
+        /// <param name="filePath"> file path </param>
+        /// <param name="originalSHA256"></param>
+        /// <returns></returns>
+        public static bool VerifySHA256(string filePath, string originalSHA256)
+        {
+            string computedSHA256 = GetSHA256(filePath);
+            return originalSHA256.ToLower().Equals(computedSHA256);
+        }
+
+        /// <summary>
+        /// Get SHA256
+        /// </summary>
+        /// <param name="filePath"></param>
+        /// <returns></returns>
+        public static string GetSHA256(string filePath)
+        {
+            using var sha256 = SHA256.Create();
+            using var stream = File.OpenRead(filePath);
+            byte[] hash = sha256.ComputeHash(stream);
+            return BitConverter.ToString(hash).Replace("-", "").ToLower();
+        }
+
+        /// <summary>
+        /// 파일 수정된 날짜 가져오기
+        /// </summary>
+        /// <param name="filePath"></param>
+        /// <returns></returns>
+        public static DateTime GetFileModificationDate(string filePath)
+        {
+            FileInfo fileInfo = new(filePath);
+            return fileInfo.LastWriteTime;
+        }
+
+        public static bool VerifyFileModificationDate(string filePath, DateTime orignalDateTime)
+        {
+            DateTime computedFileModificationDate = GetFileModificationDate(filePath);
+            return computedFileModificationDate.Equals(orignalDateTime);
+        }
+
     }
 }

@@ -1,13 +1,13 @@
 ﻿namespace FileIOAssist
 {
-    public class FileIOAssist : IDisposable
+    public class Assist : IDisposable
     {
         #region IDisposable
 
         // To detect redundant calls
         private bool _disposed = false;
 
-        ~FileIOAssist() => Dispose(false);
+        ~Assist() => Dispose(false);
 
         // Public implementation of Dispose pattern callable by consumers.
         public void Dispose()
@@ -179,6 +179,21 @@
             }
         }
 
+        public static void FileCopyStreamReader(string source, string arrival)
+        {
+            using (StreamReader reader = new StreamReader(source))
+            {
+                // 출력 파일 생성
+                using (StreamWriter writer = new StreamWriter(arrival))
+                {
+                    while (!reader.EndOfStream)
+                    {
+                        writer.WriteLine(reader.ReadLine());
+                    }
+                }
+            }
+        }
+
         /// <summary>
         /// 폴더 삭제 서브 폴더까지
         /// </summary>
@@ -234,10 +249,10 @@
         /// <param name="sourceDir"></param>
         /// <param name="arrivalDir"></param>
         /// <returns>성공 여부</returns>
-        public static bool DirCopy(string sourceDir, string arrivalDir)
+        public static bool DirCopy(string sourceDir, string arrivalDir, Extension.SubSearch subfoldersSearch = Extension.SubSearch.Full)
         {
             int faultFilesCount = 0;
-            List<string> sourceFiles = FileIOAssistExtension.DirFileSerch(sourceDir, FileIOAssistExtension.GetFileNameMode.Full, FileIOAssistExtension.SubfoldersSearch.Full);
+            List<string> sourceFiles = Extension.DirFileSerch(sourceDir, Extension.GetNameType.Full, subfoldersSearch);
             foreach (string sourceFile in sourceFiles)
             {
                 try
