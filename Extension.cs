@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+﻿using FileIOAssist.Data;
+using System.Security.Cryptography;
 
 namespace FileIOAssist
 {
@@ -126,7 +127,7 @@ namespace FileIOAssist
         /// <param name="fileNameMode"> 리턴값, 이름만 or full Name </param>
         /// <param name="subfoldersSearch"> 서브 폴더 확인 </param>
         /// <returns></returns>
-        public static List<string> DirFileSerch(string dirPath, string[]? exts = null, GetNameType fileNameMode = GetNameType.OnlyName, SubSearch subfoldersSearch = SubSearch.None, CancellationToken? CT = null)
+        public static List<string> DirFileSearch(string dirPath, string[]? exts = null, GetNameType fileNameMode = GetNameType.OnlyName, SubSearch subfoldersSearch = SubSearch.None, CancellationToken? ct = null)
         {
             exts ??= new string[] { ".*" };
             List<string> fileList = new();
@@ -134,39 +135,47 @@ namespace FileIOAssist
             string[] dirs = Directory.GetDirectories(dirPath);
 
             // 외부에 의한 정지 확인
-            if (CT is not null && CT.Value.IsCancellationRequested)
-                return fileList;
+            if (ct != null && ct.Value.IsCancellationRequested) { return fileList; }
 
             if (di.Exists)
             {
+                string a = "awd.jpg";
+                string a1 = Path.GetExtension(a);
+                string a2 = a1.TrimStart('.');
+                string a3 = a2.ToUpper();
+
+                FileInfo[] files = di.GetFiles("*.*", SearchOption.TopDirectoryOnly).Where(s => exts.Contains(Path.GetExtension(s.Name).TrimStart('.').ToLower(), StringComparer.OrdinalIgnoreCase)).ToArray();
+
                 switch (fileNameMode)
                 {
                     case GetNameType.Full:
-                        foreach (FileInfo fileInfo in di.GetFiles("*.*", SearchOption.TopDirectoryOnly).Where(s => exts.Contains(Path.GetExtension(s.Name), StringComparer.OrdinalIgnoreCase)).ToArray())
+                        foreach (FileInfo fileInfo in files)
                         {
                             fileList.Add(fileInfo.FullName);
+                            if (ct != null && ct.Value.IsCancellationRequested) { break; }
                         }
                         break;
 
                     case GetNameType.OnlyName:
-                        foreach (FileInfo fileInfo in di.GetFiles("*.*", SearchOption.TopDirectoryOnly).Where(s => exts.Contains(Path.GetExtension(s.Name), StringComparer.OrdinalIgnoreCase)).ToArray())
+                        foreach (FileInfo fileInfo in files)
                         {
                             fileList.Add(fileInfo.Name);
+                            if (ct != null && ct.Value.IsCancellationRequested) { break; }
                         }
                         break;
 
                     case GetNameType.GetFileNameWithoutExtension:
-                        foreach (FileInfo fileInfo in di.GetFiles("*.*", SearchOption.TopDirectoryOnly).Where(s => exts.Contains(Path.GetExtension(s.Name), StringComparer.OrdinalIgnoreCase)).ToArray())
+                        foreach (FileInfo fileInfo in files)
                         {
                             fileList.Add(Path.GetFileNameWithoutExtension(fileInfo.Name));
+                            if (ct != null && ct.Value.IsCancellationRequested) { break; }
                         }
                         break;
                 }
             }
 
             // 외부에 의한 정지 확인
-            if (CT is not null && CT.Value.IsCancellationRequested)
-                return fileList;
+            if (ct != null && ct.Value.IsCancellationRequested) { return fileList; }
 
             switch (subfoldersSearch)
             {
@@ -177,29 +186,79 @@ namespace FileIOAssist
                     //하위 폴더가지 확인 재귀 함수를 이용한 구현
                     if (dirs.Length > 0)
                     {
-                        if (false) // 병렬 연산을 이용하여 검색 알고리즘 수정 시도중
+                        // 병렬 연산을 이용하여 검색 알고리즘 수정 필요?
+                        foreach (string dir in dirs)
                         {
-                            List<Task<List<string>>> taskList = new();
-                            foreach (string dir in dirs)
-                                taskList.Add(Task.Run<List<string>>(() => DirFileSerch(dir, exts, fileNameMode, subfoldersSearch)));
-
-                            foreach (var task in taskList)
-                                fileList.AddRange(task.Result);
-                        }
-                        else
-                        {
-                            foreach (string dir in dirs)
-                            {
-                                // 외부에 의한 정지 확인
-                                if (CT is not null && CT.Value.IsCancellationRequested)
-                                    return fileList;
-                                fileList.AddRange(DirFileSerch(dir, exts, fileNameMode, subfoldersSearch));
-                            }
+                            // 외부에 의한 정지 확인
+                            if (ct != null && ct.Value.IsCancellationRequested) { return fileList; }
+                            fileList.AddRange(DirFileSearch(dir, exts, fileNameMode, subfoldersSearch, ct));
                         }
                     }
                     break;
             }
             return fileList;
+        }
+
+        /// <summary>
+        /// 폴더내 파일 검색
+        /// </summary>
+        /// <param name="dirPath"> 검색 dir </param>
+        /// <param name="exts"> 검색 파일 확장자 </param>
+        /// <param name="subfoldersSearch"> 서브 폴더 검색 </param>
+        /// <param name="ct"> CancellationToken </param>
+        /// <param name="rootPath"> 작업 root path </param>
+        /// <returns></returns>
+        public static DirectoryAssistInfo DirFileSearch(string dirPath, string[]? exts = null, SubSearch subfoldersSearch = SubSearch.None, CancellationToken? ct = null, string? rootPath = null)
+        {
+            DirectoryAssistInfo directoryAssistInfo = new(dirPath, rootPath);
+            DirectoryInfo di = new(dirPath);
+            string[] dirs = Directory.GetDirectories(dirPath);
+
+            // 외부에 의한 정지 확인
+            if (ct != null && ct.Value.IsCancellationRequested) { return directoryAssistInfo; }
+
+            if (di.Exists)
+            {
+                FileInfo[] files = di.GetFiles("*.*", SearchOption.TopDirectoryOnly);
+
+                foreach (FileInfo file in files)
+                {
+                    if (ct != null && ct.Value.IsCancellationRequested) { break; }
+                    string fileExtension = Path.GetExtension(file.Name).ToLower();
+                    if (exts == null)
+                    {
+                        directoryAssistInfo.Files.Add(new FileAssistInfo(file.FullName));
+                        continue;
+                    }
+                    if (exts.Any(ext => ext.ToLower().Contains(fileExtension)))
+                    {
+                        directoryAssistInfo.Files.Add(new FileAssistInfo(file.FullName));
+                    }
+                }
+            }
+
+            if (ct != null && ct.Value.IsCancellationRequested) { return directoryAssistInfo; }
+
+            switch (subfoldersSearch)
+            {
+                case SubSearch.None:
+                    return directoryAssistInfo;
+
+                case SubSearch.Full:
+                    //하위 폴더가지 확인 재귀 함수를 이용한 구현
+                    if (dirs.Length > 0)
+                    {
+                        // 병렬 연산을 이용하여 검색 알고리즘 수정 필요?
+                        foreach (string dir in dirs)
+                        {
+                            // 외부에 의한 정지 확인
+                            if (ct != null && ct.Value.IsCancellationRequested) { return directoryAssistInfo; }
+                            directoryAssistInfo.SubDirectoryAssistInfos.Add(DirFileSearch(dir, exts, subfoldersSearch, ct, rootPath));
+                        }
+                    }
+                    break;
+            }
+            return directoryAssistInfo;
         }
 
         /// <summary>
@@ -388,7 +447,7 @@ namespace FileIOAssist
         /// <returns></returns>
         public static List<string> ImageFileSearch(string path, GetNameType fileNameMode = GetNameType.OnlyName, SubSearch subfoldersSearch = SubSearch.None, CancellationToken? CT = null)
         {
-            return DirFileSerch(path, imageExts, fileNameMode, subfoldersSearch, CT);
+            return DirFileSearch(path, imageExts, fileNameMode, subfoldersSearch, CT);
         }
 
         /// <summary>

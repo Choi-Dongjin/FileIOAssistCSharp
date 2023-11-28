@@ -1,4 +1,6 @@
-﻿namespace FileIOAssist
+﻿using FileIOAssist.Data;
+
+namespace FileIOAssist
 {
     public class Assist : IDisposable
     {
@@ -77,7 +79,7 @@
             }
         }
 
-        public void FileCopy(string source, string arrival, bool task)
+        public void FileCopy(string source, string arrival)
         {
             if (this.ctsFileCopy == null || this.ctsFileCopy.IsCancellationRequested)
             {
@@ -86,8 +88,10 @@
             }
         }
 
-        public static bool FileCopy(string source, string arrival)
+        public static bool FileCopy(string source, string arrival, bool overrideFile = true)
         {
+            if (!overrideFile && File.Exists(arrival)) { return true; }
+
             FileInfo fileInfo = new FileInfo(source);
             //버퍼 크기
             int iBufferSize = 5120;
@@ -278,6 +282,29 @@
                 return false;
             else
                 return true;
+        }
+
+        public static void DirCopy(string arrivalDir, DirectoryAssistInfo subDirectoryAssistInfo, Extension.SubSearch subDirectoryCopy = Extension.SubSearch.Full)
+        {
+            string subArrivalDir = arrivalDir + subDirectoryAssistInfo.WorkPath;
+            if (!Directory.Exists(subArrivalDir)) { Directory.CreateDirectory(subArrivalDir); }
+            foreach (var fileInfo in subDirectoryAssistInfo.Files)
+            {
+                string source = fileInfo.FullPath;
+                string arrival = Path.Combine(subArrivalDir, fileInfo.Name);
+                if (!FileCopy(source, arrival, false)) { continue; }
+            }
+            switch (subDirectoryCopy)
+            {
+                case Extension.SubSearch.None:
+                    return;
+                case Extension.SubSearch.Full:
+                    foreach (var directoryAssistInfo in subDirectoryAssistInfo.SubDirectoryAssistInfos)
+                    {
+                        DirCopy(arrivalDir, directoryAssistInfo, subDirectoryCopy);
+                    }
+                    break;
+            }
         }
     }
 }

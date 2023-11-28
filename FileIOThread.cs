@@ -57,7 +57,6 @@ namespace FileIOAssist
         public string SourcePath { get; init; } = string.Empty;
         public string DestinationPath { get; init; } = string.Empty;
         public Extension.SubSearch SubFile { get; init; } = Extension.SubSearch.Full;
-
     }
 
     /// <summary>
