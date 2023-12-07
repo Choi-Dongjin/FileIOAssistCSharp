@@ -352,7 +352,7 @@ namespace FileIOAssist
         /// <returns></returns>
         internal static WorkerErrorCode FileCopy(ref FileSet fileSet)
         {
-            if (!Assist.FileCopy(fileSet.SourcePath, fileSet.DestinationPath))
+            if (!Assist.FileCopy(fileSet.SourcePath, fileSet.DestinationPath, out string error))
             {
                 return WorkerErrorCode.ActionFail;
             }
