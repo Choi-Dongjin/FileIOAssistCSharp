@@ -72,7 +72,7 @@ namespace FileIOAssist
         /// <param name="dirPath"> 대상 경로 </param>
         /// <param name="getFileNameMode"> "Full", "Name" </param>
         /// <returns></returns>
-        public static List<string> DirFileSerch(string dirPath, GetNameType fileNameMode = GetNameType.OnlyName, SubSearch subfoldersSearch = SubSearch.None, CancellationToken mainCT = default)
+        public static List<string> DirFileSearch(string dirPath, GetNameType fileNameMode = GetNameType.OnlyName, SubSearch subfoldersSearch = SubSearch.None, CancellationToken mainCT = default)
         {
             List<string> fileList = new List<string>();
 
@@ -111,7 +111,7 @@ namespace FileIOAssist
                     {
                         foreach (string dir in dirs)
                         {
-                            fileList.AddRange(DirFileSerch(dir, fileNameMode, subfoldersSearch));
+                            fileList.AddRange(DirFileSearch(dir, fileNameMode, subfoldersSearch));
                         }
                     }
                     break;

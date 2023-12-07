@@ -88,11 +88,13 @@ namespace FileIOAssist
             }
         }
 
-        public static bool FileCopy(string source, string arrival, bool overrideFile = true)
+        public static bool FileCopy(string source, string arrival, out string errorLog, bool overrideFile = true)
         {
+            errorLog = string.Empty;
+            if (!File.Exists(source)) { errorLog = $"can't not find file {source}"; return false; }
             if (!overrideFile && File.Exists(arrival)) { return true; }
 
-            FileInfo fileInfo = new FileInfo(source);
+            FileInfo fileInfo = new(source);
             //버퍼 크기
             int iBufferSize = 5120;
             long lSize = 0;
@@ -100,15 +102,15 @@ namespace FileIOAssist
             long lTotalSize = fileInfo.Length;
             //버퍼 크기만큼 바이트 배열 선언
             byte[] bTmp = new byte[iBufferSize];
-
-            long TransByte = lTotalSize;
             bool result = false;
 
-            FileStream fsRead = new FileStream(source, FileMode.Open);
-            FileStream fsWrite = new FileStream(arrival, FileMode.Create);
+            FileStream fsRead = new(source, FileMode.Open);
+            FileStream fsWrite = new(arrival, FileMode.Create);
 
             try
             {
+
+                long TransByte;
                 while (lSize < lTotalSize)
                 {
                     int iLen = fsRead.Read(bTmp, 0, bTmp.Length);
@@ -121,9 +123,10 @@ namespace FileIOAssist
 
                 result = true;
             }
-            catch
+            catch (Exception e)
             {
                 result = false;
+                errorLog = e.Message + "\n" + e.StackTrace;
             }
             finally
             {
@@ -256,7 +259,7 @@ namespace FileIOAssist
         public static bool DirCopy(string sourceDir, string arrivalDir, Extension.SubSearch subfoldersSearch = Extension.SubSearch.Full)
         {
             int faultFilesCount = 0;
-            List<string> sourceFiles = Extension.DirFileSerch(sourceDir, Extension.GetNameType.Full, subfoldersSearch);
+            List<string> sourceFiles = Extension.DirFileSearch(sourceDir, Extension.GetNameType.Full, subfoldersSearch);
             foreach (string sourceFile in sourceFiles)
             {
                 try
@@ -270,7 +273,7 @@ namespace FileIOAssist
                             continue;
                         if (!Directory.Exists(arrivalFileDirPath))
                             Directory.CreateDirectory(arrivalFileDirPath);
-                        FileCopy(sourceFile, arrivalFilePath);
+                        FileCopy(sourceFile, arrivalFilePath, out string error);
                     }
                 }
                 catch
@@ -292,7 +295,7 @@ namespace FileIOAssist
             {
                 string source = fileInfo.FullPath;
                 string arrival = Path.Combine(subArrivalDir, fileInfo.Name);
-                if (!FileCopy(source, arrival, false)) { continue; }
+                if (!FileCopy(source, arrival, out string error, false)) { continue; }
             }
             switch (subDirectoryCopy)
             {
