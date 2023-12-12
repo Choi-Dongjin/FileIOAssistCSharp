@@ -120,82 +120,81 @@ namespace FileIOAssist
         }
 
         /// <summary>
-        /// 폴더내 파일 검색
+        /// Search files in the specified folder.
         /// </summary>
-        /// <param name="dirPath"> 폴더 </param>
-        /// <param name="exts"> 확장자 필터 ex) .txt </param>
-        /// <param name="fileNameMode"> 리턴값, 이름만 or full Name </param>
-        /// <param name="subfoldersSearch"> 서브 폴더 확인 </param>
-        /// <returns></returns>
+        /// <param name="dirPath">Folder path</param>
+        /// <param name="exts">File extension filters, e.g., "txt"</param>
+        /// <param name="fileNameMode">Return value, full name or only name</param>
+        /// <param name="subfoldersSearch">Search in subfolders</param>
+        /// <param name="ct">Cancellation token</param>
+        /// <returns>List of file names</returns>
         public static List<string> DirFileSearch(string dirPath, string[]? exts = null, GetNameType fileNameMode = GetNameType.OnlyName, SubSearch subfoldersSearch = SubSearch.None, CancellationToken? ct = null)
         {
-            exts ??= new string[] { ".*" };
-            List<string> fileList = new();
-            DirectoryInfo di = new(dirPath);
-            string[] dirs = Directory.GetDirectories(dirPath);
+            List<string> fileList = new List<string>();
 
-            // 외부에 의한 정지 확인
-            if (ct != null && ct.Value.IsCancellationRequested) { return fileList; }
-
-            if (di.Exists)
+            try
             {
-                string a = "awd.jpg";
-                string a1 = Path.GetExtension(a);
-                string a2 = a1.TrimStart('.');
-                string a3 = a2.ToUpper();
+                // External cancellation check
+                if (ct?.IsCancellationRequested ?? false) return fileList;
 
-                FileInfo[] files = di.GetFiles("*.*", SearchOption.TopDirectoryOnly).Where(s => exts.Contains(Path.GetExtension(s.Name).TrimStart('.').ToLower(), StringComparer.OrdinalIgnoreCase)).ToArray();
-
-                switch (fileNameMode)
+                if (Directory.Exists(dirPath))
                 {
-                    case GetNameType.Full:
-                        foreach (FileInfo fileInfo in files)
-                        {
-                            fileList.Add(fileInfo.FullName);
-                            if (ct != null && ct.Value.IsCancellationRequested) { break; }
-                        }
-                        break;
+                    var files = Directory.GetFiles(dirPath, "*.*", SearchOption.TopDirectoryOnly)
+                        .Where(s => exts == null || exts.Length == 0 || exts.Contains(Path.GetExtension(s)?.TrimStart('.').ToLower(), StringComparer.OrdinalIgnoreCase))
+                     .ToArray();
 
-                    case GetNameType.OnlyName:
-                        foreach (FileInfo fileInfo in files)
-                        {
-                            fileList.Add(fileInfo.Name);
-                            if (ct != null && ct.Value.IsCancellationRequested) { break; }
-                        }
-                        break;
-
-                    case GetNameType.GetFileNameWithoutExtension:
-                        foreach (FileInfo fileInfo in files)
-                        {
-                            fileList.Add(Path.GetFileNameWithoutExtension(fileInfo.Name));
-                            if (ct != null && ct.Value.IsCancellationRequested) { break; }
-                        }
-                        break;
-                }
-            }
-
-            // 외부에 의한 정지 확인
-            if (ct != null && ct.Value.IsCancellationRequested) { return fileList; }
-
-            switch (subfoldersSearch)
-            {
-                case SubSearch.None:
-                    return fileList;
-
-                case SubSearch.Full:
-                    //하위 폴더가지 확인 재귀 함수를 이용한 구현
-                    if (dirs.Length > 0)
+                    foreach (var fileInfo in files)
                     {
-                        // 병렬 연산을 이용하여 검색 알고리즘 수정 필요?
-                        foreach (string dir in dirs)
+                        // External cancellation check
+                        if (ct?.IsCancellationRequested ?? false) break;
+
+                        switch (fileNameMode)
                         {
-                            // 외부에 의한 정지 확인
-                            if (ct != null && ct.Value.IsCancellationRequested) { return fileList; }
-                            fileList.AddRange(DirFileSearch(dir, exts, fileNameMode, subfoldersSearch, ct));
+                            case GetNameType.Full:
+                                fileList.Add(fileInfo);
+                                break;
+
+                            case GetNameType.OnlyName:
+                                fileList.Add(Path.GetFileName(fileInfo));
+                                break;
+
+                            case GetNameType.GetFileNameWithoutExtension:
+                                fileList.Add(Path.GetFileNameWithoutExtension(fileInfo));
+                                break;
                         }
                     }
-                    break;
+
+                    // External cancellation check
+                    if (ct?.IsCancellationRequested ?? false) return fileList;
+
+                    switch (subfoldersSearch)
+                    {
+                        case SubSearch.None:
+                            return fileList;
+
+                        case SubSearch.Full:
+                            var dirs = Directory.GetDirectories(dirPath);
+                            if (dirs.Length > 0)
+                            {
+                                // Parallelize the search algorithm if needed
+                                foreach (var subDir in dirs)
+                                {
+                                    // External cancellation check
+                                    if (ct?.IsCancellationRequested ?? false) return fileList;
+
+                                    fileList.AddRange(DirFileSearch(subDir, exts, fileNameMode, subfoldersSearch, ct));
+                                }
+                            }
+                            break;
+                    }
+                }
             }
+            catch (Exception ex)
+            {
+                // Handle or log the exception as needed
+                Console.WriteLine($"An error occurred: {ex.Message}");
+            }
+
             return fileList;
         }
 
