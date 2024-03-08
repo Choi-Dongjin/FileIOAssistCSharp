@@ -130,8 +130,7 @@ namespace FileIOAssist
         /// <returns>List of file names</returns>
         public static List<string> DirFileSearch(string dirPath, string[]? exts = null, GetNameType fileNameMode = GetNameType.OnlyName, SubSearch subfoldersSearch = SubSearch.None, CancellationToken? ct = null)
         {
-            List<string> fileList = new List<string>();
-
+            List<string> fileList = new();
             try
             {
                 // External cancellation check
@@ -435,7 +434,7 @@ namespace FileIOAssist
         /// <summary>
         /// 이미지 검색 확장자 필터 설정
         /// </summary>
-        private static readonly string[] imageExts = new[] { ".jpg", ".bmp", ".png" }; // 검색할 확장자 필터
+        private static readonly string[] imageExts = new[] { "jpg", "bmp", "png" }; // 검색할 확장자 필터
 
         /// <summary>
         /// 이미지 파일 검색
@@ -515,6 +514,8 @@ namespace FileIOAssist
             DateTime computedFileModificationDate = GetFileModificationDate(filePath);
             return computedFileModificationDate.Equals(orignalDateTime);
         }
+
+        // find files in dir.
 
     }
 }
