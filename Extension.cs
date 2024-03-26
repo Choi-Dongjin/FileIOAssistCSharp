@@ -128,7 +128,7 @@ namespace FileIOAssist
         /// <param name="subfoldersSearch">Search in subfolders</param>
         /// <param name="ct">Cancellation token</param>
         /// <returns>List of file names</returns>
-        public static List<string> DirFileSearch(string dirPath, string[]? exts = null, GetNameType fileNameMode = GetNameType.OnlyName, SubSearch subfoldersSearch = SubSearch.None, CancellationToken? ct = null)
+        public static List<string> DirFileSearch(string dirPath, string[]? exts = null, GetNameType fileNameMode = GetNameType.Full, SubSearch subfoldersSearch = SubSearch.None, CancellationToken? ct = null)
         {
             List<string> fileList = new();
             try
